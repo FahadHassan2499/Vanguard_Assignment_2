@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  api:
+    build: ./docker
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    depends_on:
+      - mlflow
+
+  mlflow:
+    image: mlflow/mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow:/mlflow
+    command: mlflow server --backend-store-uri file:///mlflow --default-artifact-root file:///mlflow --host 0.0.0.0
