@@ -1,7 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 import mlflow.pyfunc
 import logging
+
+from src.data.data_loader import load_and_preprocess_data
+from src.models.train_model import train_model
 
 app = FastAPI()
 logger = logging.getLogger("uvicorn")
@@ -22,15 +25,21 @@ def load_model():
         logger.error(f"Model loading failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Model loading failed")
 
+
 @app.post("/train")
-async def train_model(config: TrainingConfig):
+async def train_model_endpoint(config: TrainingConfig, background_tasks: BackgroundTasks):
     try:
-        # Trigger training process
-        # Implement your training logic here
-        return {"message": "Training started", "run_id": "some_run_id"}
+        X_train, _, y_train, _ = load_and_preprocess_data()
+
+        def train_task():
+            train_model(X_train, y_train, config.model_type, config.param_space)
+        background_tasks.add_task(train_task) # Run training in the background
+
+        return {"message": "Training started in the background"}
     except Exception as e:
-        logger.error(f"Training failed: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+         # ... (improved error handling)
+        raise HTTPException(status_code=500, detail=f"Training failed: {str(e)}")
+
 
 @app.get("/best_params")
 async def get_best_params():
