@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  mlflow:
+    image: mlflow/mlflow:latest
+    container_name: mlflow_server
+    ports:
+      - "5000:5000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000  # Optional: For S3-compatible storage
+    volumes:
+      - ./mlruns:/mlflow/mlruns  # Local artifact storage
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://mlflow_user:mlflow_password@postgres:5432/mlflow_db
+      --default-artifact-root s3://mlflow/  # Optional: For S3-compatible storage
+      --host 0.0.0.0
+    depends_on:
+      - postgres
+      - minio  # Optional: If using MinIO for artifact storage
+
+  postgres:
+    image: postgres:13
+    container_name: mlflow_postgres
+    environment:
+      - POSTGRES_USER=mlflow_user
+      - POSTGRES_PASSWORD=mlflow_password
+      - POSTGRES_DB=mlflow_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  minio:  # Optional: For S3-compatible storage
+    image: minio/minio:latest
+    container_name: mlflow_minio
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  flask:
+    build: ./flask-app  # Path to the directory containing the Flask app Dockerfile
+    container_name: flask_app
+    ports:
+      - "8000:8000"  # Expose Flask app on port 5001
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000  # Connect to the MLflow server
+    depends_on:
+      - mlflow
+      - postgres
+      - minio  # Optional: If using MinIO for artifact storage
+
+volumes:
+  postgres_data:
+  minio_data:
