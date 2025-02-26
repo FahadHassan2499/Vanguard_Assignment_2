@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/fahad/Documents/Deployment%20of%20ML%20models/Vanguard_Assignment_Copy_2/mlruns/0/01bde15109f441378c4ad4641aea4585/artifacts
+end_time: 1740538755964
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: 01bde15109f441378c4ad4641aea4585
+run_name: thundering-calf-645
+run_uuid: 01bde15109f441378c4ad4641aea4585
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1740538716216
+status: 3
+tags: []
+user_id: fahad
